@@ -21,7 +21,9 @@
   --cor-chave: #f7da21;
 
   --cor-item-lista: #eeeeee;
-  --cor-item-oculto: #f9f9f9;
+  --cor-encontrada: #a5d6a7;
+  --cor-encontrada-texto: #1a1a1a;
+  --cor-item-oculto: transparent;
   --cor-item-oculto-borda: #c4c4c4;
   --cor-item-oculto-texto: #6b6b6b;
 
@@ -55,7 +57,9 @@ body.dark-mode {
   --cor-letra-texto: #ffffff;
 
   --cor-item-lista: #2a2a2a;
-  --cor-item-oculto: #1a1a1a;
+  --cor-encontrada: #2e7d32;
+  --cor-encontrada-texto: #ffffff;
+  --cor-item-oculto: transparent;
   --cor-item-oculto-borda: #4a4a4a;
   --cor-item-oculto-texto: #9a9a9a;
 
@@ -312,9 +316,15 @@ input:focus-visible {
   margin: 0;
 }
 
+/*
+ * Encontrada: pílula cheia e contrastante. Oculta: só o contorno tracejado.
+ * A diferença é de claridade e forma, não de matiz: funciona para
+ * daltônicos e até em tela em preto e branco.
+ */
 #lista li {
-  background: var(--cor-item-lista);
-  color: var(--cor-texto);
+  background: var(--cor-encontrada);
+  color: var(--cor-encontrada-texto);
+  font-weight: bold;
   padding: 6px 14px;
   border-radius: 15px;
   font-size: 0.85rem;
@@ -327,6 +337,7 @@ input:focus-visible {
 }
 
 #lista li.oculta {
+  font-weight: normal;
   color: var(--cor-item-oculto-texto);
   background: var(--cor-item-oculto);
   border: 1px dashed var(--cor-item-oculto-borda);
