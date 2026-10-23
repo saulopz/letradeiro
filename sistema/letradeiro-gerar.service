@@ -8,5 +8,5 @@ Type=oneshot
 User=www-data
 Group=www-data
 # AJUSTE: troque os dois caminhos abaixo pela pasta do jogo no seu servidor
-WorkingDirectory=/var/www/saulo/letradeiro
-ExecStart=/usr/bin/php /var/www/saulo/letradeiro/generate.php
+WorkingDirectory=/var/www/letradeiro
+ExecStart=/usr/bin/php /var/www/letradeiro/generate.php

@@ -60,7 +60,7 @@ letradeiro/
 
 Faça um passo de cada vez. Os comandos marcados com 🖥️ rodam no **servidor**; os marcados com 💻, no **seu computador**.
 
-> 📁 Os exemplos usam a pasta `/var/www/saulo/letradeiro`. Se a sua for outra, troque nos comandos abaixo e nas duas linhas marcadas com `AJUSTE` em `sistema/letradeiro-gerar.service`.
+> 📁 Os exemplos usam a pasta `/var/www/letradeiro`. Se a sua for outra, troque nos comandos abaixo e nas duas linhas marcadas com `AJUSTE` em `sistema/letradeiro-gerar.service`.
 
 ### Passo 1: configurar o deploy 💻
 
@@ -89,7 +89,7 @@ O deploy faz duas coisas:
 Entre na pasta do jogo:
 
 ```bash
-cd /var/www/saulo/letradeiro
+cd /var/www/letradeiro
 ```
 
 Gere o hash da senha (digite a senha e aperte Enter; ela aparece na tela, mas não fica no histórico do bash):
@@ -114,7 +114,7 @@ Troque `COLE_O_HASH_AQUI` pelo hash copiado, **mantendo as aspas simples**. Salv
 Rode como `www-data`, o mesmo usuário que o agendador vai usar:
 
 ```bash
-sudo -u www-data php /var/www/saulo/letradeiro/generate.php
+sudo -u www-data php /var/www/letradeiro/generate.php
 ```
 
 Esperado: algo como
@@ -132,6 +132,14 @@ O `deploy.sh` já deixou os arquivos em `/tmp/letradeiro-sistema/`:
 ```bash
 sudo cp /tmp/letradeiro-sistema/letradeiro-gerar.service /tmp/letradeiro-sistema/letradeiro-gerar.timer /etc/systemd/system/
 ```
+
+> ⚠️ **Se o jogo NÃO está em `/var/www/letradeiro`**, ajuste o caminho no serviço instalado, senão o agendador falha sem avisar. Exemplo para quem instalou em `/var/www/meusite/letradeiro`:
+>
+> ```bash
+> sudo sed -i 's|/var/www/letradeiro|/var/www/meusite/letradeiro|g' /etc/systemd/system/letradeiro-gerar.service
+> ```
+>
+> Confira com `grep letradeiro /etc/systemd/system/letradeiro-gerar.service`: as duas linhas devem mostrar a sua pasta. Repita esse ajuste toda vez que copiar o `.service` de novo.
 
 ### Passo 6: conferir se o systemd entende o horário 🖥️
 
@@ -175,7 +183,7 @@ No log deve aparecer a linha `Desafio ... mantido` (ou `gerado`). Pronto, está 
 |---|---|
 | Ver quando roda de novo | `systemctl list-timers letradeiro-gerar.timer` |
 | Ver o que aconteceu nas últimas noites | `sudo journalctl -u letradeiro-gerar.service --since "3 days ago" --no-pager` |
-| Sortear outro desafio para hoje | `sudo -u www-data php /var/www/saulo/letradeiro/generate.php --forcar` |
+| Sortear outro desafio para hoje | `sudo -u www-data php /var/www/letradeiro/generate.php --forcar` |
 | Ver erros do get/reset | `sudo grep Letradeiro /var/log/nginx/error.log \| tail` |
 | Desligar o agendador | `sudo systemctl disable --now letradeiro-gerar.timer` |
 
@@ -209,7 +217,7 @@ sudo crontab -u www-data -e
 E adicione (exemplo para servidor em UTC):
 
 ```
-0 3 * * * /usr/bin/php /var/www/saulo/letradeiro/generate.php >> /tmp/letradeiro-gerar.log 2>&1
+0 3 * * * /usr/bin/php /var/www/letradeiro/generate.php >> /tmp/letradeiro-gerar.log 2>&1
 ```
 
 > ⚠️ Se um dia o Brasil voltar a ter horário de verão, a linha do cron precisa ser ajustada à mão. O timer do systemd se ajusta sozinho.
