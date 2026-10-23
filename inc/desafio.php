@@ -200,13 +200,23 @@ function garantirDesafio(string $data, bool $forcar = false): string
         }
     }
 
-    if (!is_dir(dirDados())) {
-        throw new RuntimeException('Pasta de dados não existe: ' . dirDados());
+    // Tenta criar a pasta de dados. Na instalação típica isso falha de
+    // propósito: o PHP (www-data) não pode escrever na pasta do código.
+    // Por isso o README manda criá-la com o dono certo.
+    $dir = dirDados();
+    if (!is_dir($dir) && !@mkdir($dir, 0755) && !is_dir($dir)) {
+        throw new RuntimeException(
+            "A pasta de dados não existe e não consegui criá-la: $dir. "
+            . "Crie com: sudo install -d -o www-data -g www-data $dir"
+        );
     }
 
-    $trava = fopen(dirDados() . '/.letradeiro.lock', 'c');
+    $trava = @fopen("$dir/.letradeiro.lock", 'c');
     if ($trava === false) {
-        throw new RuntimeException('Não consegui abrir o arquivo de trava em ' . dirDados() . ' (permissão?)');
+        throw new RuntimeException(
+            "Sem permissão de escrita em $dir. "
+            . "Corrija com: sudo chown www-data:www-data $dir"
+        );
     }
 
     try {

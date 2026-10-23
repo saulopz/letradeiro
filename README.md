@@ -84,7 +84,7 @@ O deploy faz duas coisas:
 - manda os arquivos do jogo para a pasta pública do site (sem `data/`, `docs/`, `sistema/` nem o README);
 - manda a pasta `sistema/` para `/tmp/letradeiro-sistema/` no servidor, **fora** da pasta pública. O Passo 5 usa esses arquivos.
 
-### Passo 3: criar a senha do reset 🖥️
+### Passo 3: criar a pasta de dados e a senha do reset 🖥️
 
 Entre na pasta do jogo:
 
@@ -92,7 +92,15 @@ Entre na pasta do jogo:
 cd /var/www/letradeiro
 ```
 
-Gere o hash da senha (digite a senha e aperte Enter; ela aparece na tela, mas não fica no histórico do bash):
+Crie a pasta onde os desafios ficam guardados, já pertencendo ao `www-data` (o usuário do PHP), que é quem vai escrever nela:
+
+```bash
+sudo install -d -o www-data -g www-data data
+```
+
+> 💡 A pasta `data/` não vai no deploy de propósito: ela é criada uma vez no servidor e nunca é sobrescrita, para não apagar os desafios dos dias anteriores (o gabarito de ontem depende deles).
+
+Agora a senha. Gere o hash da senha (digite a senha e aperte Enter; ela aparece na tela, mas não fica no histórico do bash):
 
 ```bash
 php -r 'echo "Senha: "; echo password_hash(trim(fgets(STDIN)), PASSWORD_DEFAULT), PHP_EOL;'
@@ -117,13 +125,13 @@ Rode como `www-data`, o mesmo usuário que o agendador vai usar:
 sudo -u www-data php /var/www/letradeiro/generate.php
 ```
 
-Esperado: algo como
+Esperado, na primeira vez: algo como
 
 ```
-[2026-10-24] Desafio já existia, mantido: letras T L X V I O A (chave T), 80 palavras, 0 ms
+[2026-10-24] Desafio gerado: letras T L X V I O A (chave T), 80 palavras, 312 ms
 ```
 
-Se der erro de permissão, confira se a pasta `data/` pertence a `www-data`.
+Se der erro, a própria mensagem diz o comando para corrigir (pasta inexistente ou sem permissão de escrita).
 
 ### Passo 5: instalar no systemd 🖥️
 
