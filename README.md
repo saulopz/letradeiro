@@ -3,11 +3,23 @@
 Jogo diário de formar palavras com 7 letras, uma delas obrigatória (a chave).
 Todo dia, à meia-noite de Brasília, um novo desafio é sorteado.
 
+![Tela do Letradeiro no celular, tema claro à esquerda e escuro à direita: roda de 7 letras com a letra central em amarelo, botões Apagar, Mix e Enviar, mensagem de pangrama encontrado e a lista de palavras descobertas](docs/letradeiro.png)
+
+## Como jogar
+
+- Forme palavras de **3 letras ou mais** usando as letras da roda.
+- Toda palavra precisa ter a **letra central** (a amarela). Letras podem se repetir.
+- Um **pangrama** usa as 7 letras e ganha confetes. 🌟
+- No computador, dá para jogar pelo **teclado**: digite as letras (acentos são ignorados), `Enter` envia, `Backspace` apaga, `Esc` fecha as telas sobrepostas.
+
 ## Estrutura
 
 ```
 letradeiro/
 ├── index.html, script.js, styles.css   front-end do jogo
+├── favicon.svg      ícone da aba
+├── vendor/          bibliotecas de terceiros (canvas-confetti), servidas localmente
+├── docs/            imagens do README (não vão para o servidor)
 ├── get.php          entrega o desafio de hoje (e o gabarito de ontem)
 ├── generate.php     gera o desafio pelo terminal (usado pelo agendador)
 ├── reset.php        sorteia um novo desafio de hoje (pede senha)
@@ -69,7 +81,7 @@ Preencha usuário SSH, endereço do servidor e pasta do jogo. Salve (`Ctrl+O`, `
 
 O deploy faz duas coisas:
 
-- manda os arquivos do jogo para a pasta pública do site (sem `data/`, sem o README, sem a pasta `sistema/`);
+- manda os arquivos do jogo para a pasta pública do site (sem `data/`, `docs/`, `sistema/` nem o README);
 - manda a pasta `sistema/` para `/tmp/letradeiro-sistema/` no servidor, **fora** da pasta pública. O Passo 5 usa esses arquivos.
 
 ### Passo 3: criar a senha do reset 🖥️
@@ -225,6 +237,13 @@ Depois: `sudo nginx -t && sudo systemctl reload nginx`.
 - **`id` do desafio:** é o md5 de data, chave e letras. Assim, as mesmas letras em outro dia (ou com outra chave) não herdam o progresso salvo no navegador. Desafios antigos mantêm o formato de id anterior; nada quebra na transição.
 - **Dicionário:** `/usr/share/dict/brazilian` (pacote `wbrazilian`). Lido uma vez por sorteio e filtrado em memória com `preg_grep`.
 - **Tempo de geração:** de 0,2 a 0,4 s nos testes.
+- **Acessibilidade:** todas as combinações de cor de texto e fundo passam no contraste mínimo da WCAG nos dois temas; as letras da roda são botões de verdade (funcionam com leitor de tela e teclado); quem configura o sistema para reduzir movimento não recebe confetes nem animações.
+- **Tema:** na primeira visita segue o do sistema (claro ou escuro); depois, vale a escolha feita no botão 🌙/☀️.
+- **Sem dependências externas em tempo de execução:** a biblioteca de confetes é servida pelo próprio servidor, não por um CDN.
+
+## Software de terceiros
+
+- [canvas-confetti](https://github.com/catdad/canvas-confetti) 1.6.0, de Kiril Vatev, licença ISC. Cópia em `vendor/confetti.browser.js`; licença em `vendor/LICENSE-canvas-confetti`.
 
 ---
 

@@ -26,6 +26,7 @@ rsync -avz \
     --exclude '.git/' \
     --exclude 'data/' \
     --exclude 'sistema/' \
+    --exclude 'docs/' \
     --exclude 'deploy.sh' \
     --exclude 'deploy.conf*' \
     --exclude '*.md' \

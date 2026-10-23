@@ -5,94 +5,73 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Letradeiro: jogo diário de formar palavras em português." />
+    <!-- Cor da barra do navegador no Android -->
+    <meta name="theme-color" content="#f73fae" />
     <title>Letradeiro Diário</title>
-    <link rel="stylesheet" href="styles.css?v=2.0" />
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="script.js?v=2.0" defer></script>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css?v=2.1" />
+    <script src="vendor/confetti.browser.js?v=1.6.0" defer></script>
+    <script src="script.js?v=2.1" defer></script>
   </head>
   <body>
     <header class="barra-titulo">
       <h1>Letradeiro</h1>
-      <button
-        onclick="alternarTema()"
-        class="btn-tema"
-        id="btn-tema"
-        aria-label="Alternar tema"
-      >
-        🌗
-      </button>
+      <button type="button" class="btn-tema" id="btn-tema" aria-label="Alternar tema">🌗</button>
     </header>
-    <div class="game-container">
-      <div id="palavra-atual"></div>
 
-      <div class="wheel" id="wheel"></div>
+    <main class="game-container" id="jogo">
+      <div id="palavra-atual" aria-live="polite"></div>
+
+      <div class="wheel" id="wheel" role="group" aria-label="Letras do desafio"></div>
 
       <div class="controles">
-        <button onclick="apagar()">Apagar</button>
-        <button
-          onclick="renderizarLetras()"
-          style="background: #ff75c8; color: white; border: none"
-        >
-          Mix
-        </button>
-        <button
-          onclick="enviar()"
-          style="background: #4caf50; color: white; border: none"
-        >
-          Enviar
-        </button>
+        <button type="button" id="btn-apagar">Apagar</button>
+        <button type="button" id="btn-mix" class="btn-mix">Mix</button>
+        <button type="button" id="btn-enviar" class="btn-enviar">Enviar</button>
       </div>
 
-      <div id="palavra-digitada">&nbsp;</div>
+      <div id="mensagem" role="status" aria-live="polite">&nbsp;</div>
 
-      <div class="descobertas">
-        <h3><span id="count">0</span> de <span id="total"></span></h3>
+      <section class="descobertas" aria-label="Palavras do desafio">
+        <h2><span id="count">0</span> de <span id="total">…</span></h2>
         <div class="progress-container">
           <div id="progress-bar"></div>
         </div>
         <ul id="lista"></ul>
-      </div>
+      </section>
 
-      <div class="rodape">
-        <button onclick="verGabarito()" class="btn-secundario">
-          Ver gabarito de ontem
-        </button>
+      <footer class="rodape">
+        <button type="button" id="btn-gabarito" class="btn-secundario">Ver gabarito de ontem</button>
         <br />
-        <button
-          onclick="abrirModalReset()"
-          class="btn-secundario"
-          style="margin-top: 5px; opacity: 0.6"
-        >
-          Resetar desafio de hoje
-        </button>
-      </div>
-    </div>
+        <button type="button" id="btn-abrir-reset" class="btn-secundario">Resetar desafio de hoje</button>
+        <br />
+        <a class="link-fonte" href="https://github.com/saulopz/letradeiro" target="_blank" rel="noopener">
+          Código-fonte (software livre, AGPL-3.0)
+        </a>
+      </footer>
+    </main>
 
-    <div id="modal-gabarito" style="display: none">
-      <h3 style="margin-top: 0">Gabarito de Ontem</h3>
+    <section id="modal-gabarito" class="modal" hidden>
+      <h2>Gabarito de Ontem</h2>
       <div id="lista-gabarito" class="gabarito-grid"></div>
-      <button onclick="fecharGabarito()" class="btn-voltar">
-        Voltar ao Jogo
-      </button>
-    </div>
+      <button type="button" id="btn-fechar-gabarito" class="btn-voltar">Voltar ao Jogo</button>
+    </section>
 
-    <div id="modal-reset" style="display: none">
-      <h3 style="margin-top: 10">Resetar Desafio</h3>
-      <p style="font-size: 0.9rem; color: var(--cor-texto-suave)">
-        Digite a senha de administração para sortear um novo desafio de hoje:
-      </p>
-      <input
-        type="password"
-        id="senha-reset"
-        placeholder="Senha"
-        class="input-password"
-      />
-      <div style="display: flex; gap: 10px">
-        <button onclick="fecharModalReset()" class="button-cancelar">
-          Cancelar
-        </button>
-        <button onclick="confirmarReset()" class="button-reset">Resetar</button>
-      </div>
-    </div>
+    <section id="modal-reset" class="modal" hidden>
+      <h2>Resetar Desafio</h2>
+      <!-- Um <form> de verdade: Enter envia e o gerenciador de senhas reconhece o campo -->
+      <form id="form-reset">
+        <p class="texto-suave">
+          Digite a senha de administração para sortear um novo desafio de hoje:
+        </p>
+        <input type="password" id="senha-reset" placeholder="Senha" class="input-password"
+               autocomplete="current-password" aria-label="Senha de administração" required />
+        <div class="botoes-modal">
+          <button type="button" id="btn-cancelar-reset">Cancelar</button>
+          <button type="submit" class="btn-perigo">Resetar</button>
+        </div>
+      </form>
+    </section>
   </body>
 </html>

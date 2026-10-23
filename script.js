@@ -1,39 +1,103 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Saulo Popov Zambiasi
 
+"use strict";
+
+const WEBSERVICE = "get.php"; // relativo: funciona em qualquer servidor
+const CHAVE_PROGRESSO = "letradeiro_progresso";
+const CHAVE_TEMA = "letradeiro_tema";
+const MAX_LETRAS = 20;
+
 let dadosJogo = null;
-let progresso = { data: "", encontradas: [] };
+let progresso = { data: "", id: "", encontradas: [] };
 let tentativa = "";
-let webservice = "get.php"; // relativo: funciona em qualquer servidor
+
+const $ = (id) => document.getElementById(id);
+
+/* ------------------------------------------------------------------
+ * Armazenamento local (pode falhar em aba anônima ou com bloqueio de
+ * cookies; o jogo continua funcionando, só não lembra o progresso)
+ * ------------------------------------------------------------------ */
+
+function lerStorage(chave) {
+  try {
+    return localStorage.getItem(chave);
+  } catch {
+    return null;
+  }
+}
+
+function gravarStorage(chave, valor) {
+  try {
+    localStorage.setItem(chave, valor);
+  } catch {
+    /* sem armazenamento: segue o jogo */
+  }
+}
+
+function removerStorage(chave) {
+  try {
+    localStorage.removeItem(chave);
+  } catch {
+    /* idem */
+  }
+}
+
+function salvar() {
+  gravarStorage(CHAVE_PROGRESSO, JSON.stringify(progresso));
+}
+
+/* ------------------------------------------------------------------
+ * Tema: na primeira visita segue o do sistema; depois, a escolha salva
+ * ------------------------------------------------------------------ */
+
+function temaAtual() {
+  const salvo = lerStorage(CHAVE_TEMA);
+  if (salvo === "dark" || salvo === "light") return salvo;
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
 
 function aplicarTema() {
-  const temaSalvo = localStorage.getItem("letradeiro_tema") || "light";
-  const btn = document.getElementById("btn-tema");
+  const escuro = temaAtual() === "dark";
+  document.body.classList.toggle("dark-mode", escuro);
 
-  if (temaSalvo === "dark") {
-    document.body.classList.add("dark-mode");
-    if (btn) btn.innerText = "☀️"; // Ícone para voltar ao claro
-  } else {
-    document.body.classList.remove("dark-mode");
-    if (btn) btn.innerText = "🌙"; // Ícone para ir ao escuro
-  }
+  const btn = $("btn-tema");
+  btn.textContent = escuro ? "☀️" : "🌙";
+  btn.setAttribute("aria-label", escuro ? "Mudar para o tema claro" : "Mudar para o tema escuro");
 }
 
 function alternarTema() {
-  if (document.body.classList.contains("dark-mode")) {
-    localStorage.setItem("letradeiro_tema", "light");
-  } else {
-    localStorage.setItem("letradeiro_tema", "dark");
-  }
+  gravarStorage(CHAVE_TEMA, document.body.classList.contains("dark-mode") ? "light" : "dark");
   aplicarTema();
 }
 
-aplicarTema();
+/* ------------------------------------------------------------------
+ * Mensagens (texto sempre via textContent, nunca HTML)
+ * ------------------------------------------------------------------ */
+
+function mostrarMensagem(texto, tipo) {
+  const el = $("mensagem");
+  el.replaceChildren();
+  if (!texto) {
+    el.textContent = " ";
+    return;
+  }
+  const span = document.createElement("span");
+  span.className = `msg-${tipo}`;
+  span.textContent = texto;
+  el.appendChild(span);
+}
+
+/* ------------------------------------------------------------------
+ * Inicialização
+ * ------------------------------------------------------------------ */
 
 async function iniciar() {
-  // 1. Buscar dados do backend
+  aplicarTema();
+  ligarEventos();
+
   try {
-    const response = await fetch(webservice);
+    const response = await fetch(WEBSERVICE, { cache: "no-store" });
     const dados = await response.json();
     if (!response.ok || !Array.isArray(dados.respostas)) {
       throw new Error(dados.erro || `HTTP ${response.status}`);
@@ -41,48 +105,47 @@ async function iniciar() {
     dadosJogo = dados;
   } catch (e) {
     console.error(e);
-    document.getElementById("palavra-digitada").innerHTML =
-      `<span style="color: #f44336">⚠️ Não consegui carregar o desafio. Tente de novo em instantes.</span>`;
+    mostrarMensagem("⚠️ Não consegui carregar o desafio. Tente de novo em instantes.", "erro");
     return;
   }
-  document.getElementById("total").innerText = dadosJogo.respostas.length;
 
-  // 2. Verificar LocalStorage
-  const salvo = JSON.parse(localStorage.getItem("letradeiro_progresso"));
-  if (salvo && salvo.id === dadosJogo.id) {
+  $("total").textContent = dadosJogo.respostas.length;
+
+  // Progresso salvo só vale se for do mesmo desafio
+  let salvo = null;
+  try {
+    salvo = JSON.parse(lerStorage(CHAVE_PROGRESSO));
+  } catch {
+    salvo = null; // dado corrompido: começa do zero
+  }
+
+  if (salvo && salvo.id === dadosJogo.id && Array.isArray(salvo.encontradas)) {
     progresso = salvo;
   } else {
-    progresso = {
-      data: dadosJogo.data,
-      id: dadosJogo.id,
-      encontradas: [],
-    };
+    progresso = { data: dadosJogo.data, id: dadosJogo.id, encontradas: [] };
     salvar();
   }
 
   renderizarLetras();
   atualizarLista();
-  aplicarTema();
 }
 
-function renderizarLetras() {
-  const wheel = document.getElementById("wheel");
-  const letras = [...dadosJogo.letras];
-  embaralhar(letras);
-  const chave = dadosJogo.chave;
-
-  const outras = letras.filter((l) => l !== chave);
-
-  wheel.innerHTML = `<div class="hex chave" onclick="addLetra('${chave}')">${chave.toUpperCase()}</div>`;
-
-  outras.forEach((l, i) => {
-    const angulo = i * 60 * (Math.PI / 180);
-    // Ajustado para o novo centro (102.5) e raio menor (90)
-    const x = 102.5 + 90 * Math.cos(angulo);
-    const y = 102.5 + 90 * Math.sin(angulo);
-    wheel.innerHTML += `<div class="hex" style="left:${x}px; top:${y}px" onclick="addLetra('${l}')">${l.toUpperCase()}</div>`;
-  });
+function ligarEventos() {
+  $("btn-tema").addEventListener("click", alternarTema);
+  $("btn-apagar").addEventListener("click", apagar);
+  $("btn-mix").addEventListener("click", renderizarLetras);
+  $("btn-enviar").addEventListener("click", enviar);
+  $("btn-gabarito").addEventListener("click", verGabarito);
+  $("btn-fechar-gabarito").addEventListener("click", fecharModais);
+  $("btn-abrir-reset").addEventListener("click", abrirModalReset);
+  $("btn-cancelar-reset").addEventListener("click", fecharModais);
+  $("form-reset").addEventListener("submit", confirmarReset);
+  document.addEventListener("keydown", tratarTeclado);
 }
+
+/* ------------------------------------------------------------------
+ * Roda de letras
+ * ------------------------------------------------------------------ */
 
 function embaralhar(lista) {
   for (let i = lista.length - 1; i > 0; i--) {
@@ -92,182 +155,264 @@ function embaralhar(lista) {
   return lista;
 }
 
+function criarLetra(letra, classe, rotulo, x, y) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = classe;
+  b.textContent = letra.toUpperCase();
+  b.setAttribute("aria-label", rotulo);
+  if (x !== undefined) {
+    b.style.left = `${x}px`;
+    b.style.top = `${y}px`;
+  }
+  b.addEventListener("click", () => addLetra(letra));
+  return b;
+}
+
+function renderizarLetras() {
+  if (!dadosJogo) return;
+
+  const wheel = $("wheel");
+  const chave = dadosJogo.chave;
+  const outras = embaralhar(dadosJogo.letras.filter((l) => l !== chave));
+
+  wheel.replaceChildren(criarLetra(chave, "hex chave", `Letra central ${chave.toUpperCase()}`));
+
+  outras.forEach((l, i) => {
+    const angulo = i * 60 * (Math.PI / 180);
+    const x = 102.5 + 90 * Math.cos(angulo);
+    const y = 102.5 + 90 * Math.sin(angulo);
+    wheel.appendChild(criarLetra(l, "hex", `Letra ${l.toUpperCase()}`, x, y));
+  });
+}
+
+/* ------------------------------------------------------------------
+ * Montagem e envio da palavra
+ * ------------------------------------------------------------------ */
+
+function atualizarTentativa() {
+  $("palavra-atual").textContent = tentativa.toUpperCase();
+}
+
 function addLetra(l) {
+  if (tentativa.length >= MAX_LETRAS) return;
   tentativa += l;
-  document.getElementById("palavra-atual").innerText = tentativa.toUpperCase();
+  atualizarTentativa();
 }
 
 function apagar() {
   tentativa = tentativa.slice(0, -1);
-  document.getElementById("palavra-atual").innerText = tentativa.toUpperCase();
+  atualizarTentativa();
+}
+
+/** Usa as 7 letras? (as respostas só contêm letras do desafio) */
+function ehPangrama(p) {
+  return new Set(p).size === 7;
 }
 
 function enviar() {
-  const p = tentativa.toLowerCase();
-  const palavra_digitada = document.getElementById("palavra-digitada");
+  if (!dadosJogo) return;
 
-  if (dadosJogo.respostas.includes(p) && !progresso.encontradas.includes(p)) {
+  const p = tentativa.toLowerCase();
+  const P = p.toUpperCase();
+  tentativa = "";
+  atualizarTentativa();
+
+  if (!p) return;
+
+  // As mensagens dizem o motivo: o jogador aprende as regras jogando
+  if (p.length < 3) {
+    mostrarMensagem(`❌ ${P}: muito curta (mínimo 3 letras)`, "erro");
+  } else if (!p.includes(dadosJogo.chave)) {
+    mostrarMensagem(`❌ ${P}: falta a letra central (${dadosJogo.chave.toUpperCase()})`, "erro");
+  } else if (progresso.encontradas.includes(p)) {
+    mostrarMensagem(`🔁 ${P}: você já encontrou`, "aviso");
+  } else if (!dadosJogo.respostas.includes(p)) {
+    mostrarMensagem(`❌ ${P}: não está na lista`, "erro");
+  } else {
     progresso.encontradas.push(p);
     salvar();
     atualizarLista();
 
-    // --- LÓGICA DO PANGRAMA (FESTINHA) ---
-    // Verifica se a palavra usa todas as 7 letras do desafio
-    const letrasUnicas = new Set(p.split(""));
-    const todasAchadas =
-      progresso.encontradas.length === dadosJogo.respostas.length;
-    if (todasAchadas) {
-      // VITÓRIA TOTAL: O ápice do jogo
-      dispararFestinha(); // Uma grande explosão
-      palavra_digitada.innerHTML = `<span style="color: #4caf50">🏆 <b>${p.toUpperCase()}</b> CONCLUÍDO!</span>`;
-    } else if (letrasUnicas.size === 7) {
+    if (progresso.encontradas.length === dadosJogo.respostas.length) {
       dispararFestinha();
-      palavra_digitada.innerHTML = `<span style="color: #f7da21">🌟 <b>${p.toUpperCase()}</b> PANGRAMA!</span>`;
+      mostrarMensagem(`🏆 ${P}: desafio concluído!`, "concluido");
+    } else if (ehPangrama(p)) {
+      dispararFestinha();
+      mostrarMensagem(`🌟 ${P}: PANGRAMA!`, "pangrama");
     } else {
-      palavra_digitada.innerHTML = `<span style="color: #4caf50"><b>${p.toUpperCase()}</b> 👍</span>`;
+      mostrarMensagem(`👍 ${P}`, "sucesso");
     }
-    // -------------------------------------
 
-    const elementoEncontrado = document.getElementById(`word-${p}`);
-    if (elementoEncontrado) {
-      elementoEncontrado.scrollIntoView({
-        behavior: "smooth",
-        inline: "center",
-      });
-    }
-  } else if (progresso.encontradas.includes(p)) {
-    palavra_digitada.innerHTML = `<span style="color: #ff9800"><b>${p.toUpperCase()}</b> 🔁</span>`;
-  } else {
-    palavra_digitada.innerHTML = `<span style="color: #f44336"><b>${p.toUpperCase()}</b> ❌</span>`;
+    $(`word-${p}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }
-  tentativa = "";
-  document.getElementById("palavra-atual").innerText = "";
+
   window.scrollTo(0, 0);
 }
 
 function dispararFestinha() {
-  // Configuração rápida de confetes
+  if (typeof confetti !== "function") return; // biblioteca não carregou: sem festa, mas sem erro
   confetti({
     particleCount: 150,
     spread: 70,
     origin: { y: 0.6 },
     colors: ["#ff75c8", "#f7da21", "#4caf50", "#add8e6"],
+    disableForReducedMotion: true,
   });
 }
 
-function salvar() {
-  localStorage.setItem("letradeiro_progresso", JSON.stringify(progresso));
-}
+/* ------------------------------------------------------------------
+ * Lista de palavras
+ * ------------------------------------------------------------------ */
 
 function atualizarLista() {
   const encontradas = progresso.encontradas.length;
   const total = dadosJogo.respostas.length;
-  const porcentagem = (encontradas / total) * 100;
 
-  document.getElementById("count").innerText = encontradas;
-  document.getElementById("progress-bar").style.width = porcentagem + "%";
+  $("count").textContent = encontradas;
+  $("progress-bar").style.width = `${(encontradas / total) * 100}%`;
 
-  const lista = document.getElementById("lista");
+  const ordenadas = [...dadosJogo.respostas].sort((a, b) =>
+    a.length !== b.length ? a.length - b.length : a.localeCompare(b, "pt-BR"),
+  );
 
-  const todasAsRespostas = [...dadosJogo.respostas].sort((a, b) => {
-    if (a.length !== b.length) return a.length - b.length;
-    return a.localeCompare(b);
+  const itens = ordenadas.map((p) => {
+    const li = document.createElement("li");
+    li.id = `word-${p}`;
+    li.style.setProperty("--tamanho-palavra", p.length);
+
+    if (progresso.encontradas.includes(p)) {
+      li.textContent = p;
+      if (ehPangrama(p)) li.classList.add("pangrama");
+    } else {
+      li.className = "oculta";
+      li.textContent = `${p.length} letras`;
+    }
+    return li;
   });
 
-  lista.innerHTML = todasAsRespostas
-    .map((p) => {
-      const jaAchou = progresso.encontradas.includes(p);
-      // Adicionamos style="--tamanho-palavra: ${p.length}"
-      if (jaAchou) {
-        return `<li id="word-${p}" style="--tamanho-palavra: ${p.length}">${p}</li>`;
-      } else {
-        return `<li id="word-${p}" class="oculta" style="--tamanho-palavra: ${p.length}">${p.length} letras</li>`;
-      }
-    })
-    .join("");
+  $("lista").replaceChildren(...itens);
 }
 
-async function verGabarito() {
-  const listaG = document.getElementById("lista-gabarito");
-  const modal = document.getElementById("modal-gabarito");
-  const jogo = document.querySelector(".game-container");
+/* ------------------------------------------------------------------
+ * Teclado físico: letras, Enter envia, Backspace apaga, Esc fecha telas
+ * ------------------------------------------------------------------ */
 
-  // Limpa o scroll para o topo do celular
-  window.scrollTo(0, 0);
-  listaG.innerHTML = "Carregando...";
+/** "Á" vira "a", "ç" continua "ç" */
+function normalizarTecla(tecla) {
+  if (tecla.length !== 1) return null;
+  const minuscula = tecla.toLowerCase();
+  if (minuscula === "ç") return "ç";
+  return minuscula.normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
 
-  try {
-    const response = await fetch(`${webservice}?ontem=1`);
+function tratarTeclado(e) {
+  if (e.key === "Escape") {
+    fecharModais();
+    return;
+  }
 
-    if (!response.ok) {
-      const erroDados = await response.json();
-      listaG.innerHTML = `<p style="padding:20px;">${erroDados.erro}</p>`;
-    } else {
-      const dadosOntem = await response.json();
-      const respostas = dadosOntem.respostas.sort((a, b) => a.localeCompare(b));
-      listaG.innerHTML = respostas.map((p) => `<span>${p}</span>`).join("");
-    }
+  // Fora do jogo, em campos de texto ou com atalhos do sistema: não interfere
+  if (!dadosJogo || $("jogo").hidden) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target instanceof HTMLInputElement) return;
 
-    // Esconde um, mostra o outro
-    jogo.style.display = "none";
-    modal.style.display = "block";
-  } catch (e) {
-    alert("Erro ao buscar dados de ontem.");
-    console.error(e);
+  if (e.key === "Enter") {
+    // Com foco num botão, Enter aciona o botão (quem navega por Tab espera isso)
+    if (e.target instanceof HTMLButtonElement) return;
+    e.preventDefault();
+    enviar();
+    return;
+  }
+
+  if (e.key === "Backspace") {
+    e.preventDefault();
+    apagar();
+    return;
+  }
+
+  const letra = normalizarTecla(e.key);
+  if (letra && dadosJogo.letras.includes(letra)) {
+    e.preventDefault();
+    addLetra(letra);
   }
 }
 
-function fecharGabarito() {
-  const modal = document.getElementById("modal-gabarito");
-  const jogo = document.querySelector(".game-container");
+/* ------------------------------------------------------------------
+ * Telas sobrepostas: gabarito e reset
+ * ------------------------------------------------------------------ */
 
-  // Esconde o gabarito
-  modal.style.display = "none";
-
-  // Restaura a visibilidade do jogo
-  // Usamos 'block' ou 'flex' para garantir que ele preencha o espaço
-  jogo.style.display = "block";
-
-  // Garante que a tela volte ao topo para o início do jogo
+function abrirModal(id) {
   window.scrollTo(0, 0);
+  $("jogo").hidden = true;
+  $(id).hidden = false;
+}
+
+function fecharModais() {
+  $("modal-gabarito").hidden = true;
+  $("modal-reset").hidden = true;
+  $("jogo").hidden = false;
+  window.scrollTo(0, 0);
+}
+
+async function verGabarito() {
+  const listaG = $("lista-gabarito");
+  listaG.textContent = "Carregando...";
+  abrirModal("modal-gabarito");
+
+  try {
+    const response = await fetch(`${WEBSERVICE}?ontem=1`, { cache: "no-store" });
+    const dados = await response.json();
+
+    if (!response.ok) {
+      const p = document.createElement("p");
+      p.textContent = dados.erro || "Não foi possível carregar o gabarito.";
+      listaG.replaceChildren(p);
+      return;
+    }
+
+    const spans = [...dados.respostas]
+      .sort((a, b) => a.localeCompare(b, "pt-BR"))
+      .map((palavra) => {
+        const s = document.createElement("span");
+        s.textContent = palavra;
+        return s;
+      });
+    listaG.replaceChildren(...spans);
+  } catch (e) {
+    console.error(e);
+    listaG.textContent = "Erro ao buscar o gabarito de ontem.";
+  }
 }
 
 function abrirModalReset() {
-  window.scrollTo(0, 0);
-  document.querySelector(".game-container").style.display = "none";
-  document.getElementById("senha-reset").value = "";
-  document.getElementById("modal-reset").style.display = "block";
+  $("senha-reset").value = "";
+  abrirModal("modal-reset");
+  $("senha-reset").focus();
 }
 
-function fecharModalReset() {
-  document.getElementById("modal-reset").style.display = "none";
-  document.querySelector(".game-container").style.display = "block";
-  window.scrollTo(0, 0);
-}
-
-async function confirmarReset() {
-  const senha = document.getElementById("senha-reset").value;
+async function confirmarReset(e) {
+  e.preventDefault();
+  const senha = $("senha-reset").value;
   if (!senha) return;
 
   try {
     const response = await fetch("reset.php", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `senha=${encodeURIComponent(senha)}`,
+      body: new URLSearchParams({ senha }),
     });
-
     const resultado = await response.json();
 
     if (response.ok && resultado.sucesso) {
-      localStorage.removeItem("letradeiro_progresso");
+      removerStorage(CHAVE_PROGRESSO);
       alert("Novo desafio sorteado! O jogo será recarregado.");
       window.location.reload();
     } else {
       alert("Erro: " + (resultado.erro || "Senha incorreta."));
     }
-  } catch (e) {
+  } catch (err) {
+    console.error(err);
     alert("Erro ao conectar com o servidor.");
-    console.error(e);
   }
 }
 

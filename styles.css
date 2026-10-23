@@ -1,19 +1,44 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 /* Copyright (C) 2026 Saulo Popov Zambiasi */
 
+/*
+ * Cores: todas as combinações de texto e fundo passam no contraste
+ * mínimo da WCAG (4,5:1 para texto comum, 3:1 para texto grande),
+ * nos dois temas.
+ */
+
 :root {
   --cor-bg: #fafafa;
-  --cor-container: white;
+  --cor-container: #ffffff;
   --cor-texto: #333333;
   --cor-texto-suave: #666666;
-  --cor-chave: #f7da21;
+  --cor-borda: #cccccc;
+  --cor-trilho: #eeeeee;
+  --cor-rolagem: #cccccc;
+
   --cor-letra: #e6e6e6;
   --cor-letra-texto: #000000;
+  --cor-chave: #f7da21;
+
   --cor-item-lista: #eeeeee;
   --cor-item-oculto: #f9f9f9;
-  --cor-item-oculto-borda: #dddddd;
-  --cor-item-oculto-texto: #bbbbbb;
-  --cor-borda: #cccccc;
+  --cor-item-oculto-borda: #c4c4c4;
+  --cor-item-oculto-texto: #6b6b6b;
+
+  /* Mensagens */
+  --cor-sucesso: #2e7d32;
+  --cor-erro: #c62828;
+  --cor-aviso: #9a5b00;
+
+  /* Identidade (iguais nos dois temas) */
+  --cor-rosa: #ff75c8;
+  --cor-rosa-barra: #f73fae;
+  --cor-verde: #2e7d32;
+  --cor-vermelho: #d32f2f;
+  --cor-amarelo: #f7da21;
+  --cor-texto-sobre-claro: #1a1a1a;
+
+  color-scheme: light;
 }
 
 /* A interface sob a ausência de luz */
@@ -22,18 +47,32 @@ body.dark-mode {
   --cor-container: #1e1e1e;
   --cor-texto: #e0e0e0;
   --cor-texto-suave: #aaaaaa;
-  --cor-chave: #f7da21; /* Mantém o amarelo ouro pelo contraste */
+  --cor-borda: #444444;
+  --cor-trilho: #333333;
+  --cor-rolagem: #555555;
+
   --cor-letra: #333333;
   --cor-letra-texto: #ffffff;
+
   --cor-item-lista: #2a2a2a;
   --cor-item-oculto: #1a1a1a;
-  --cor-item-oculto-borda: #333333;
-  --cor-item-oculto-texto: #555555;
-  --cor-borda: #444444;
+  --cor-item-oculto-borda: #4a4a4a;
+  --cor-item-oculto-texto: #9a9a9a;
+
+  --cor-sucesso: #66bb6a;
+  --cor-erro: #ef5350;
+  --cor-aviso: #ffb74d;
+
+  color-scheme: dark;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  /* Evita o zoom por duplo toque (iPhone) ao tocar rápido na mesma letra */
+  touch-action: manipulation;
 }
 
 body {
@@ -43,21 +82,20 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: var(--cor-bg); /* Alterado */
-  color: var(--cor-texto); /* Adicionado */
+  background: var(--cor-bg);
+  color: var(--cor-texto);
   overflow-x: hidden;
   width: 100%;
   transition:
     background 0.3s,
-    color 0.3s; /* Transição suave */
+    color 0.3s;
 }
 
-/* 2. Correção da Barra de Título para mobile */
+/* --- Barra de título --- */
 .barra-titulo {
-  background-color: #ff75c8;
-  color: white;
-  width: 100vw; /* Usa a largura da janela de visualização */
-  height: 50px; /* Reduzi um pouco a altura (era 60) */
+  background-color: var(--cor-rosa-barra);
+  color: #ffffff;
+  height: 50px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -65,10 +103,10 @@ body {
   position: fixed;
   top: 0;
   left: 0;
+  right: 0; /* em vez de 100vw, que estoura com barra de rolagem no desktop */
   z-index: 1000;
 }
 
-/* Ajuste fino para o texto */
 .barra-titulo h1 {
   margin: 0;
   font-size: 1.5rem;
@@ -76,21 +114,30 @@ body {
   letter-spacing: 1px;
 }
 
-/* 3. Diminuindo o espaço entre os elementos */
+.btn-tema {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  padding: 5px 8px;
+}
+
+/* --- Área do jogo --- */
 .game-container {
   max-width: 400px;
   width: 100%;
   text-align: center;
-  margin-top: 60px; /* Espaço reduzido após a barra (era 80) */
-  padding: 0 10px; /* Respiro lateral para não colar na borda do celular */
+  margin-top: 60px;
+  padding: 0 10px;
 }
 
-/* Círculo de Letras */
+/* Círculo de letras */
 .wheel {
   position: relative;
-  width: 260px; /* Reduzi o tamanho do círculo (era 300) */
+  width: 260px;
   height: 260px;
-  margin: 5px auto; /* Margem bem pequena (era 10) */
+  margin: 5px auto;
 }
 
 .hex {
@@ -99,38 +146,60 @@ body {
   height: 55px;
   left: 102.5px;
   top: 102.5px;
-  background: var(--cor-letra);
+  padding: 0;
+  border: none;
   border-radius: 50%;
+  background: var(--cor-letra);
+  color: var(--cor-letra-texto);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 1.5rem;
+  font: bold 1.5rem sans-serif;
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
   transition: transform 0.1s;
-  background: var(--cor-letra);
-  color: var(--cor-letra-texto);
 }
 
 .hex:active {
   transform: scale(0.9);
 }
+
 .hex.chave {
   background: var(--cor-chave);
+  /* Escuro nos dois temas: texto branco no amarelo seria ilegível */
+  color: var(--cor-texto-sobre-claro);
   z-index: 2;
-  left: 102.5px;
-  top: 102.5px;
 }
 
-/* Input e Mensagens */
+/* Palavra sendo montada */
 #palavra-atual {
-  font-size: 1.8rem; /* Reduzi um pouco o tamanho (era 2) */
-  height: 2rem; /* Reduzi a altura (era 2.5) */
-  margin-bottom: 0px; /* Removi a margem inferior */
+  font-size: 1.8rem;
+  height: 2rem;
   font-weight: bold;
-  color: #333;
   color: var(--cor-texto);
+  letter-spacing: 1px;
+}
+
+/* --- Botões --- */
+button {
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 20px;
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-container);
+  color: var(--cor-texto);
+  font-size: 0.9rem;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Contorno visível só para quem navega pelo teclado */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--cor-rosa-barra);
+  outline-offset: 2px;
 }
 
 .controles {
@@ -138,43 +207,114 @@ body {
   margin-bottom: 10px;
 }
 
-button {
-  padding: 10px 20px;
-  cursor: pointer;
-  border-radius: 20px;
-  border: 1px solid var(--cor-borda);
-  background: var(--cor-container);
-  color: var(--cor-texto) !important;
+.btn-mix {
+  background: var(--cor-rosa);
+  color: var(--cor-texto-sobre-claro);
+  border: none;
 }
 
-/* Lista de Descobertas com Rolagem Horizontal */
+.btn-enviar {
+  background: var(--cor-verde);
+  color: #ffffff;
+  border: none;
+  font-weight: bold;
+}
+
+.btn-perigo {
+  background: var(--cor-vermelho);
+  color: #ffffff;
+  border: none;
+  font-weight: bold;
+}
+
+.btn-secundario {
+  margin-top: 20px;
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+  border: none;
+  background: transparent;
+  text-decoration: underline;
+}
+
+.btn-voltar {
+  background: var(--cor-verde);
+  color: #ffffff;
+  border: none;
+  width: 100%;
+  font-weight: bold;
+}
+
+/* --- Mensagens --- */
+#mensagem {
+  min-height: 1.6rem;
+  font-weight: bold;
+}
+
+.msg-sucesso {
+  color: var(--cor-sucesso);
+}
+.msg-erro {
+  color: var(--cor-erro);
+}
+.msg-aviso {
+  color: var(--cor-aviso);
+}
+
+/* Pangrama: selo amarelo com texto escuro (texto amarelo seria ilegível) */
+.msg-pangrama,
+.msg-concluido {
+  display: inline-block;
+  background: var(--cor-amarelo);
+  color: var(--cor-texto-sobre-claro);
+  padding: 2px 12px;
+  border-radius: 12px;
+}
+
+/* --- Lista de descobertas, com rolagem horizontal --- */
 .descobertas {
   width: 100%;
-  background: white;
+  background: var(--cor-container);
   padding: 15px;
   border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box; /* Garante que o padding não quebre a largura */
-  background: var(--cor-container);
+}
+
+.descobertas h2 {
+  font-size: 1.15rem;
+  margin: 0.5rem 0;
+}
+
+.progress-container {
+  width: 100%;
+  background-color: var(--cor-trilho);
+  border-radius: 10px;
+  margin: 10px 0;
+}
+
+#progress-bar {
+  width: 0%;
+  height: 10px;
+  background-color: var(--cor-verde);
+  border-radius: 10px;
+  transition: width 0.3s;
 }
 
 #lista {
   display: grid;
-  /* Cria 3 linhas fixas e colunas automáticas conforme o conteúdo */
   grid-template-rows: repeat(3, auto);
   grid-auto-flow: column;
   gap: 8px;
   padding: 10px 5px;
   list-style: none;
-  overflow-x: auto; /* Habilita rolagem horizontal */
-  -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   justify-content: flex-start;
   margin: 0;
 }
 
 #lista li {
   background: var(--cor-item-lista);
-  color: var(--cor-texto) !important;
+  color: var(--cor-texto);
   padding: 6px 14px;
   border-radius: 15px;
   font-size: 0.85rem;
@@ -182,124 +322,64 @@ button {
   text-align: center;
   border: 1px solid transparent;
   transition: all 0.2s;
-
-  /* A mágica acontece aqui: */
-  /* Definimos que o item deve ter, no mínimo, espaço para o número de letras */
-  /* O ch é uma unidade que mede a largura do caractere '0' */
+  /* Espaço mínimo para o número de letras ('ch' = largura do caractere '0') */
   min-width: calc(var(--tamanho-palavra) * 1ch + 25px);
 }
 
-/* Estilo para palavras não encontradas */
-/*
 #lista li.oculta {
-  color: #bbb;
-  background: #f9f9f9;
-  border: 1px dashed #ddd;
-  / Garante que o texto "X letras" também caiba sem quebrar 
-  min-width: calc(max(var(--tamanho-palavra), 8) * 1ch + 20px);
-}
-*/
-
-#lista li.oculta {
-  color: var(--cor-item-oculto-texto) !important;
+  color: var(--cor-item-oculto-texto);
   background: var(--cor-item-oculto);
   border: 1px dashed var(--cor-item-oculto-borda);
   min-width: calc(max(var(--tamanho-palavra), 8) * 1ch + 20px);
 }
 
-/* No seu script.js, dentro do atualizarLista, você pode adicionar uma classe se for pangrama */
-/* No CSS, adicione: */
 #lista li.pangrama {
-  background: #f7da21; /* Amarelo ouro */
-  color: #333;
+  background: var(--cor-amarelo);
+  color: var(--cor-texto-sobre-claro);
   font-weight: bold;
-  border: 1px solid #d4af37;
+  border: 1px solid #b8a000;
 }
 
-/* Estilo para scrollbar discreta em navegadores modernos */
 #lista::-webkit-scrollbar {
   height: 6px;
 }
 #lista::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: var(--cor-rolagem);
   border-radius: 10px;
 }
 
-.progress-container {
-  width: 100%;
-  background-color: #eee;
-  border-radius: 10px;
-  margin: 10px 0;
-}
-#progress-bar {
-  width: 0%;
-  height: 10px;
-  background-color: #4caf50;
-  border-radius: 10px;
-  transition: width 0.3s;
+/* --- Rodapé --- */
+.rodape {
+  padding-bottom: 20px;
 }
 
-#modal-gabarito {
+.link-fonte {
+  display: inline-block;
+  margin-top: 15px;
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+}
+
+/* --- Telas sobrepostas (gabarito e reset) --- */
+.modal {
   padding: 20px;
   text-align: center;
-  margin: 70px auto 20px auto; /* Espaço para a barra rosa superior */
+  margin: 70px auto 20px auto; /* espaço para a barra rosa */
   width: 90%;
   max-width: 400px;
-  background: white; /* Importante: para não ficar transparente */
+  background: var(--cor-container);
   border-radius: 15px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  display: none; /* Será controlado pelo JS */
-  background: var(--cor-container);
 }
 
-.gabarito-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  margin: 20px 0;
-  max-height: 55vh; /* Evita que o modal cresça demais no celular */
-  overflow-y: auto;
-  padding: 10px;
-  border: 1px solid #eee;
-  border-radius: 8px;
+.modal h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
 }
 
-.gabarito-grid span {
-  /* background: #f0f0f0; */
-  background: var(--cor-item-lista);
-  color: var(--cor-texto);
-  padding: 5px 10px;
-  border-radius: 5px;
+.texto-suave {
   font-size: 0.9rem;
-  text-transform: uppercase;
-}
-
-.btn-voltar {
-  background: #4caf50;
-  color: white;
-  width: 100%;
-  font-weight: bold;
-}
-
-.btn-secundario {
-  margin-top: 20px;
-  font-size: 0.8rem;
-  color: #666;
-  border: none;
-  background: transparent;
-  text-decoration: underline;
-}
-
-.btn-tema {
-  position: absolute;
-  right: 15px;
-  background: transparent;
-  border: none;
-  font-size: 1.4rem;
-  cursor: pointer;
-  padding: 5px;
-  color: var(--cor-texto) !important;
+  color: var(--cor-texto-suave);
 }
 
 .gabarito-grid {
@@ -310,9 +390,18 @@ button {
   margin: 20px 0;
   max-height: 60vh;
   overflow-y: auto;
-  border: 1px solid #eee;
+  border: 1px solid var(--cor-borda);
   padding: 15px;
   border-radius: 8px;
+}
+
+.gabarito-grid span {
+  background: var(--cor-item-lista);
+  color: var(--cor-texto);
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
 }
 
 .input-password {
@@ -320,24 +409,24 @@ button {
   padding: 10px;
   border-radius: 8px;
   border: 1px solid var(--cor-borda);
+  background: var(--cor-bg);
+  color: var(--cor-texto);
   margin-bottom: 15px;
   font-size: 1rem;
-  box-sizing: border-box;
+}
+
+.botoes-modal {
+  display: flex;
+  gap: 10px;
+}
+
+.botoes-modal button {
   flex: 1;
 }
 
-.button-reset {
-  flex: 1;
-  background: #f44336;
-  color: white;
-  border: none;
-  font-weight: bold;
-}
-
-.button-cancelar {
-  flex: 1;
-  background: blue;
-  color: white;
-  border: none;
-  font-weight: bold;
+/* Quem pediu menos movimento ao sistema não recebe animações */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }
