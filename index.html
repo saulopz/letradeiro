@@ -1,0 +1,98 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Copyright (C) 2026 Saulo Popov Zambiasi -->
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Letradeiro Diário</title>
+    <link rel="stylesheet" href="styles.css?v=2.0" />
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="script.js?v=2.0" defer></script>
+  </head>
+  <body>
+    <header class="barra-titulo">
+      <h1>Letradeiro</h1>
+      <button
+        onclick="alternarTema()"
+        class="btn-tema"
+        id="btn-tema"
+        aria-label="Alternar tema"
+      >
+        🌗
+      </button>
+    </header>
+    <div class="game-container">
+      <div id="palavra-atual"></div>
+
+      <div class="wheel" id="wheel"></div>
+
+      <div class="controles">
+        <button onclick="apagar()">Apagar</button>
+        <button
+          onclick="renderizarLetras()"
+          style="background: #ff75c8; color: white; border: none"
+        >
+          Mix
+        </button>
+        <button
+          onclick="enviar()"
+          style="background: #4caf50; color: white; border: none"
+        >
+          Enviar
+        </button>
+      </div>
+
+      <div id="palavra-digitada">&nbsp;</div>
+
+      <div class="descobertas">
+        <h3><span id="count">0</span> de <span id="total"></span></h3>
+        <div class="progress-container">
+          <div id="progress-bar"></div>
+        </div>
+        <ul id="lista"></ul>
+      </div>
+
+      <div class="rodape">
+        <button onclick="verGabarito()" class="btn-secundario">
+          Ver gabarito de ontem
+        </button>
+        <br />
+        <button
+          onclick="abrirModalReset()"
+          class="btn-secundario"
+          style="margin-top: 5px; opacity: 0.6"
+        >
+          Resetar desafio de hoje
+        </button>
+      </div>
+    </div>
+
+    <div id="modal-gabarito" style="display: none">
+      <h3 style="margin-top: 0">Gabarito de Ontem</h3>
+      <div id="lista-gabarito" class="gabarito-grid"></div>
+      <button onclick="fecharGabarito()" class="btn-voltar">
+        Voltar ao Jogo
+      </button>
+    </div>
+
+    <div id="modal-reset" style="display: none">
+      <h3 style="margin-top: 10">Resetar Desafio</h3>
+      <p style="font-size: 0.9rem; color: var(--cor-texto-suave)">
+        Digite a senha de administração para sortear um novo desafio de hoje:
+      </p>
+      <input
+        type="password"
+        id="senha-reset"
+        placeholder="Senha"
+        class="input-password"
+      />
+      <div style="display: flex; gap: 10px">
+        <button onclick="fecharModalReset()" class="button-cancelar">
+          Cancelar
+        </button>
+        <button onclick="confirmarReset()" class="button-reset">Resetar</button>
+      </div>
+    </div>
+  </body>
+</html>

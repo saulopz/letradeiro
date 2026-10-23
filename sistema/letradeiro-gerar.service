@@ -1,0 +1,12 @@
+[Unit]
+Description=Letradeiro: gera o desafio do dia
+
+[Service]
+Type=oneshot
+# Roda como o mesmo usuário do PHP-FPM, para os arquivos em data/
+# terem o mesmo dono dos que o get.php e o reset.php criam
+User=www-data
+Group=www-data
+# AJUSTE: troque os dois caminhos abaixo pela pasta do jogo no seu servidor
+WorkingDirectory=/var/www/saulo/letradeiro
+ExecStart=/usr/bin/php /var/www/saulo/letradeiro/generate.php

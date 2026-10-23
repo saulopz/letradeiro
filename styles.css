@@ -1,0 +1,343 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Copyright (C) 2026 Saulo Popov Zambiasi */
+
+:root {
+  --cor-bg: #fafafa;
+  --cor-container: white;
+  --cor-texto: #333333;
+  --cor-texto-suave: #666666;
+  --cor-chave: #f7da21;
+  --cor-letra: #e6e6e6;
+  --cor-letra-texto: #000000;
+  --cor-item-lista: #eeeeee;
+  --cor-item-oculto: #f9f9f9;
+  --cor-item-oculto-borda: #dddddd;
+  --cor-item-oculto-texto: #bbbbbb;
+  --cor-borda: #cccccc;
+}
+
+/* A interface sob a ausência de luz */
+body.dark-mode {
+  --cor-bg: #121212;
+  --cor-container: #1e1e1e;
+  --cor-texto: #e0e0e0;
+  --cor-texto-suave: #aaaaaa;
+  --cor-chave: #f7da21; /* Mantém o amarelo ouro pelo contraste */
+  --cor-letra: #333333;
+  --cor-letra-texto: #ffffff;
+  --cor-item-lista: #2a2a2a;
+  --cor-item-oculto: #1a1a1a;
+  --cor-item-oculto-borda: #333333;
+  --cor-item-oculto-texto: #555555;
+  --cor-borda: #444444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--cor-bg); /* Alterado */
+  color: var(--cor-texto); /* Adicionado */
+  overflow-x: hidden;
+  width: 100%;
+  transition:
+    background 0.3s,
+    color 0.3s; /* Transição suave */
+}
+
+/* 2. Correção da Barra de Título para mobile */
+.barra-titulo {
+  background-color: #ff75c8;
+  color: white;
+  width: 100vw; /* Usa a largura da janela de visualização */
+  height: 50px; /* Reduzi um pouco a altura (era 60) */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+/* Ajuste fino para o texto */
+.barra-titulo h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* 3. Diminuindo o espaço entre os elementos */
+.game-container {
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  margin-top: 60px; /* Espaço reduzido após a barra (era 80) */
+  padding: 0 10px; /* Respiro lateral para não colar na borda do celular */
+}
+
+/* Círculo de Letras */
+.wheel {
+  position: relative;
+  width: 260px; /* Reduzi o tamanho do círculo (era 300) */
+  height: 260px;
+  margin: 5px auto; /* Margem bem pequena (era 10) */
+}
+
+.hex {
+  position: absolute;
+  width: 55px;
+  height: 55px;
+  left: 102.5px;
+  top: 102.5px;
+  background: var(--cor-letra);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.5rem;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.1s;
+  background: var(--cor-letra);
+  color: var(--cor-letra-texto);
+}
+
+.hex:active {
+  transform: scale(0.9);
+}
+.hex.chave {
+  background: var(--cor-chave);
+  z-index: 2;
+  left: 102.5px;
+  top: 102.5px;
+}
+
+/* Input e Mensagens */
+#palavra-atual {
+  font-size: 1.8rem; /* Reduzi um pouco o tamanho (era 2) */
+  height: 2rem; /* Reduzi a altura (era 2.5) */
+  margin-bottom: 0px; /* Removi a margem inferior */
+  font-weight: bold;
+  color: #333;
+  color: var(--cor-texto);
+}
+
+.controles {
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 20px;
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-container);
+  color: var(--cor-texto) !important;
+}
+
+/* Lista de Descobertas com Rolagem Horizontal */
+.descobertas {
+  width: 100%;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box; /* Garante que o padding não quebre a largura */
+  background: var(--cor-container);
+}
+
+#lista {
+  display: grid;
+  /* Cria 3 linhas fixas e colunas automáticas conforme o conteúdo */
+  grid-template-rows: repeat(3, auto);
+  grid-auto-flow: column;
+  gap: 8px;
+  padding: 10px 5px;
+  list-style: none;
+  overflow-x: auto; /* Habilita rolagem horizontal */
+  -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
+  justify-content: flex-start;
+  margin: 0;
+}
+
+#lista li {
+  background: var(--cor-item-lista);
+  color: var(--cor-texto) !important;
+  padding: 6px 14px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-align: center;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+
+  /* A mágica acontece aqui: */
+  /* Definimos que o item deve ter, no mínimo, espaço para o número de letras */
+  /* O ch é uma unidade que mede a largura do caractere '0' */
+  min-width: calc(var(--tamanho-palavra) * 1ch + 25px);
+}
+
+/* Estilo para palavras não encontradas */
+/*
+#lista li.oculta {
+  color: #bbb;
+  background: #f9f9f9;
+  border: 1px dashed #ddd;
+  / Garante que o texto "X letras" também caiba sem quebrar 
+  min-width: calc(max(var(--tamanho-palavra), 8) * 1ch + 20px);
+}
+*/
+
+#lista li.oculta {
+  color: var(--cor-item-oculto-texto) !important;
+  background: var(--cor-item-oculto);
+  border: 1px dashed var(--cor-item-oculto-borda);
+  min-width: calc(max(var(--tamanho-palavra), 8) * 1ch + 20px);
+}
+
+/* No seu script.js, dentro do atualizarLista, você pode adicionar uma classe se for pangrama */
+/* No CSS, adicione: */
+#lista li.pangrama {
+  background: #f7da21; /* Amarelo ouro */
+  color: #333;
+  font-weight: bold;
+  border: 1px solid #d4af37;
+}
+
+/* Estilo para scrollbar discreta em navegadores modernos */
+#lista::-webkit-scrollbar {
+  height: 6px;
+}
+#lista::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.progress-container {
+  width: 100%;
+  background-color: #eee;
+  border-radius: 10px;
+  margin: 10px 0;
+}
+#progress-bar {
+  width: 0%;
+  height: 10px;
+  background-color: #4caf50;
+  border-radius: 10px;
+  transition: width 0.3s;
+}
+
+#modal-gabarito {
+  padding: 20px;
+  text-align: center;
+  margin: 70px auto 20px auto; /* Espaço para a barra rosa superior */
+  width: 90%;
+  max-width: 400px;
+  background: white; /* Importante: para não ficar transparente */
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: none; /* Será controlado pelo JS */
+  background: var(--cor-container);
+}
+
+.gabarito-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 20px 0;
+  max-height: 55vh; /* Evita que o modal cresça demais no celular */
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.gabarito-grid span {
+  /* background: #f0f0f0; */
+  background: var(--cor-item-lista);
+  color: var(--cor-texto);
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.btn-voltar {
+  background: #4caf50;
+  color: white;
+  width: 100%;
+  font-weight: bold;
+}
+
+.btn-secundario {
+  margin-top: 20px;
+  font-size: 0.8rem;
+  color: #666;
+  border: none;
+  background: transparent;
+  text-decoration: underline;
+}
+
+.btn-tema {
+  position: absolute;
+  right: 15px;
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 5px;
+  color: var(--cor-texto) !important;
+}
+
+.gabarito-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 20px 0;
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.input-password {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  margin-bottom: 15px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+.button-reset {
+  flex: 1;
+  background: #f44336;
+  color: white;
+  border: none;
+  font-weight: bold;
+}
+
+.button-cancelar {
+  flex: 1;
+  background: blue;
+  color: white;
+  border: none;
+  font-weight: bold;
+}

@@ -1,0 +1,8 @@
+# Desafios gerados no servidor
+data/
+
+# Senha de administração (hash): cada instalação tem a sua
+inc/config.php
+
+# Dados do seu servidor, usados pelo deploy.sh
+deploy.conf

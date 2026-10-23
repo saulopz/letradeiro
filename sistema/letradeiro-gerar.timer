@@ -1,0 +1,12 @@
+[Unit]
+Description=Letradeiro: agenda a geração diária à meia-noite de Brasília
+
+[Timer]
+# Meia-noite e cinco segundos no fuso do jogo, independente do fuso do servidor
+OnCalendar=*-*-* 00:00:05 America/Sao_Paulo
+# Se o servidor estava desligado à meia-noite, roda assim que ligar
+Persistent=true
+Unit=letradeiro-gerar.service
+
+[Install]
+WantedBy=timers.target

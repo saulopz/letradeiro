@@ -1,0 +1,6 @@
+# Configuração do deploy.sh
+# Copie para deploy.conf e ajuste. O deploy.conf NÃO vai para o git.
+
+REMOTE_USER="seu_usuario"
+REMOTE_HOST="seu.servidor.com.br"
+REMOTE_DIR="/var/www/letradeiro"
