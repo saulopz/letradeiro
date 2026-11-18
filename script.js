@@ -7,6 +7,7 @@ const WEBSERVICE = "get.php"; // relativo: funciona em qualquer servidor
 const CHAVE_PROGRESSO = "letradeiro_progresso";
 const CHAVE_TEMA = "letradeiro_tema";
 const MAX_LETRAS = 20;
+const PALAVRAS_POR_COLUNA = 3; // precisa bater com o grid-template-rows do #lista
 
 let dadosJogo = null;
 let progresso = { data: "", id: "", encontradas: [] };
@@ -276,7 +277,19 @@ function atualizarLista() {
     a.length !== b.length ? a.length - b.length : a.localeCompare(b, "pt-BR"),
   );
 
-  const itens = ordenadas.map((p) => {
+  // A grade tem 4 linhas: o número da coluna e 3 palavras. Inserir um
+  // número a cada 3 palavras faz cada número cair no topo da sua coluna.
+  // Serve para conferir as listas com outra pessoa ("coluna 12, 2ª palavra").
+  const itens = [];
+  ordenadas.forEach((p, i) => {
+    if (i % PALAVRAS_POR_COLUNA === 0) {
+      const num = document.createElement("li");
+      num.className = "num-coluna";
+      num.setAttribute("aria-hidden", "true"); // leitor de tela ignora
+      num.textContent = i / PALAVRAS_POR_COLUNA + 1;
+      itens.push(num);
+    }
+
     const li = document.createElement("li");
     li.id = `word-${p}`;
     li.style.setProperty("--tamanho-palavra", p.length);
@@ -288,7 +301,7 @@ function atualizarLista() {
       li.className = "oculta";
       li.textContent = `${p.length} letras`;
     }
-    return li;
+    itens.push(li);
   });
 
   $("lista").replaceChildren(...itens);

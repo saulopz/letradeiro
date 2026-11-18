@@ -305,7 +305,8 @@ input:focus-visible {
 
 #lista {
   display: grid;
-  grid-template-rows: repeat(3, auto);
+  /* 1ª linha: número da coluna; depois 3 palavras (PALAVRAS_POR_COLUNA no script.js) */
+  grid-template-rows: auto repeat(3, auto);
   grid-auto-flow: column;
   gap: 8px;
   padding: 10px 5px;
@@ -342,6 +343,21 @@ input:focus-visible {
   background: var(--cor-item-oculto);
   border: 1px dashed var(--cor-item-oculto-borda);
   min-width: calc(max(var(--tamanho-palavra), 8) * 1ch + 20px);
+}
+
+/* Número discreto no topo de cada coluna */
+#lista li.num-coluna {
+  background: none;
+  border: none;
+  padding: 0;
+  min-width: 0;
+  margin-bottom: -4px; /* aproxima o número da sua coluna */
+  font-size: 0.7rem;
+  font-weight: normal;
+  color: var(--cor-texto-suave);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #lista li.pangrama {
